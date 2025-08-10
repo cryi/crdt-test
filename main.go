@@ -18,16 +18,14 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	badger4 "github.com/ipfs/go-ds-badger4"
 	crdt "github.com/ipfs/go-ds-crdt"
-	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	record "github.com/libp2p/go-libp2p-record"
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/routing"
-	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	"github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay"
 	multiaddr "github.com/multiformats/go-multiaddr"
 )
@@ -121,20 +119,11 @@ func main() {
 	secret, _ := base64.StdEncoding.DecodeString("4EAKNnP7P20cfTdNMO927WpapoA3O4foBCq1caqfXas=")
 	node := &node{}
 
-	connMgr, err := connmgr.NewConnManager(100, 600, connmgr.WithGracePeriod(time.Minute))
-
-	node.Host, err = libp2p.New(
-		libp2p.PrivateNetwork(secret),
-		libp2p.ListenAddrs(listenAddr),
-		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
-			node.dht, err = newDHT(ctx, h)
-			if err != nil {
-				return nil, err
-			}
-			return node.dht, nil
-		}),
-		libp2p.ConnectionManager(connMgr),
-	)
+	priv, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 1)
+	if err != nil {
+		panic(err.Error())
+	}
+	node.Host, node.dht, err = ipfslite.SetupLibp2p(ctx, priv, secret, []multiaddr.Multiaddr{listenAddr}, nil, ipfslite.Libp2pOptionsExtra...)
 	if err != nil {
 		panic(err.Error())
 	}
