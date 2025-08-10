@@ -1,1 +1,1 @@
- GOLOG_LOG_LEVEL="debug" go run . -connect "/ip4/<ip>/tcp/9999/p2p/<node id>"
+ `GOLOG_LOG_LEVEL="debug" go run . -connect "/ip4/<ip>/tcp/9999/p2p/<node id>"`
